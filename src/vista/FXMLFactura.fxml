@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -15,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefWidth="963.0" styleClass="workspace-container" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLFacturaController">
+<StackPane styleClass="workspace-container" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLFacturaController">
   <children>
     <VBox fx:id="ap_factura" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 5; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);">
       <StackPane.margin>
@@ -113,7 +114,7 @@
                   <HBox prefHeight="222.0" prefWidth="637.0">
                      <children>
       
-                  <TableView fx:id="tbl_detallefactura" editable="true" prefHeight="100.0" prefWidth="531.0" styleClass="invoice-table">
+                  <TableView fx:id="tbl_detallefactura" editable="true" prefHeight="222.0" prefWidth="562.0" styleClass="invoice-table">
                     <columns>
                       <TableColumn fx:id="col_ID" prefWidth="75.0" text="ID" visible="false" />
                       <TableColumn fx:id="col_codigo" prefWidth="120.0" text="CÓDIGO" />
@@ -192,4 +193,8 @@
       </children>
     </VBox>
   </children>
+   <stylesheets>
+      <URL value="@../resources/css/facturaStyle.css" />
+      <URL value="@../resources/css/facturaStyle.css" />
+   </stylesheets>
 </StackPane>

@@ -36,7 +36,7 @@
 
          <!-- Submenú Proceso -->
          <VBox fx:id="subMenuProceso" managed="false" spacing="5" style="-fx-padding: 0 0 0 15;" visible="false">
-             <Button maxWidth="Infinity" prefHeight="30" text="Facturas" onAction="#accBtnFactura" />
+             <Button maxWidth="Infinity" onAction="#accBtnFactura" prefHeight="30" text="Facturas" />
              <Button maxWidth="Infinity" prefHeight="30" text="Pagos" />
          </VBox>
 
@@ -72,9 +72,9 @@
    </left>
 
    <center>
-      <ScrollPane prefHeight="472.0" prefWidth="613.0" BorderPane.alignment="CENTER">
+      <ScrollPane BorderPane.alignment="CENTER">
          <content>
-            <VBox fx:id="dataPane" prefHeight="400.0" prefWidth="600.0" />
+            <VBox fx:id="dataPane" />
          </content>
       </ScrollPane>
    </center>

@@ -1,0 +1,97 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : 13 nov 2025, 12:27:16 p.m.
+    Author     : usuario
+*/
+
+/* Estilo base para el fondo de la aplicación */
+.workspace-container {
+    -fx-background-color: #f4f4f4; /* Un gris claro para el fondo */
+}
+
+/* Título principal */
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+/* Texto general de etiquetas */
+.workspace-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #555;
+}
+
+/* Campos de texto generales */
+.workspace-field {
+    -fx-font-size: 13px;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #ccc;
+}
+.workspace-field:focused {
+    -fx-border-color: #0078D7; /* Resaltar al enfocar */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,120,215,0.3), 5, 0, 0, 0);
+}
+
+/* Campos de texto para totales (solo lectura) */
+.workspace-field-totals {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-RIGHT;
+}
+
+/* Botón Primario (Guardar) */
+.primary-button {
+    -fx-background-color: #0078D7;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 8 15 8 15;
+    -fx-cursor: hand;
+}
+.primary-button:hover {
+    -fx-background-color: #005a9e;
+}
+
+/* Botón Secundario (Cancelar, Imprimir, etc.) */
+.secondary-button {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 8 15 8 15;
+    -fx-cursor: hand;
+}
+.secondary-button:hover {
+    -fx-background-color: #c9c9c9;
+}
+
+/* Botón de Peligro (Quitar) */
+.danger-button {
+    -fx-background-color: #d9534f;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 5 10 5 10; /* Más pequeño */
+    -fx-cursor: hand;
+}
+.danger-button:hover {
+    -fx-background-color: #c9302c;
+}
+
+/* Estilo de la Tabla */
+.invoice-table .column-header {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1 1 0;
+}
+.invoice-table .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
