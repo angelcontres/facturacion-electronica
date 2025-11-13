@@ -39,6 +39,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -58,7 +59,7 @@ import util.JPAUtil;
 public class FXMLFacturaController implements Initializable {
 
     @FXML
-    private AnchorPane ap_factura;
+    private VBox ap_factura;
     @FXML
     private TableView<Detallefactura> tbl_detallefactura;
     @FXML
@@ -119,6 +120,14 @@ public class FXMLFacturaController implements Initializable {
     private ProductoJpaController gestorProducto;
     
     private final DecimalFormat formatoDosDecimales = new DecimalFormat("0.00");
+    @FXML
+    private Button btn_buscarCliente;
+    @FXML
+    private Button btn_anadirProducto;
+    @FXML
+    private Button btn_eliminarDetalle;
+    @FXML
+    private TextField txt_observaciones;
     
     /**
      * Initializes the controller class.
@@ -534,5 +543,12 @@ public class FXMLFacturaController implements Initializable {
             // mod_general.mod.showError("No se pudo abrir el formulario de cliente");
         }
     }
-    ///dfsdfsdfsdf
+
+    @FXML
+    private void buscarCliente(ActionEvent event) {
+    }
+
+    
+    
+    
 }
