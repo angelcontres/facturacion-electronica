@@ -1,0 +1,68 @@
+# === Java ===
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.ear
+
+# Archivos generados
+hs_err_pid*
+replay_pid*
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+out/
+!.mvn/wrapper/maven-wrapper.jar
+
+# === Eclipse ===
+.project
+.classpath
+.settings/
+bin/
+
+# === NetBeans ===
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# === VS Code ===
+.vscode/
+
+# === Maven ===
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+# === Gradle ===
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# === JavaFX runtime or build outputs ===
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs y temporales ===
+*.log
+*.tmp
+*.cache
+*.bak
+*.old
+
+# === Archivos de entorno ===
+.env
+.env.*

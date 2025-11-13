@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane id="AnchorPane" prefHeight="425.0" prefWidth="616.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLPerfilesController">
+   <children>
+      <TextField fx:id="txtBuscarPerfil" layoutX="206.0" layoutY="41.0" prefHeight="25.0" prefWidth="278.0" />
+      <Label fx:id="lblPerfil" layoutX="129.0" layoutY="45.0" text="Buscar Perfil" />
+      <TableView fx:id="tblPerfiles" layoutX="129.0" layoutY="109.0" onMouseClicked="#onClickMouse" prefHeight="207.0" prefWidth="358.0">
+        <columns>
+          <TableColumn fx:id="colId" prefWidth="75.0" text="ID" />
+          <TableColumn fx:id="colDescripcion" prefWidth="174.0" text="Descripcion" />
+            <TableColumn fx:id="colEstado" prefWidth="92.0" text="Estado" />
+        </columns>
+      </TableView>
+      <Button fx:id="btnAgregar" layoutX="365.0" layoutY="327.0" mnemonicParsing="false" onAction="#accBtnAgregar" text="Agregar" />
+      <Button fx:id="btnCancelar" layoutX="435.0" layoutY="327.0" mnemonicParsing="false" onAction="#accBtnCancelar" text="Cancelar" />
+   </children>
+</AnchorPane>

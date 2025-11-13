@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/24.0.1" fx:controller="controladores.FXMLBuscarProductosController">
+   <children>
+      <TextField fx:id="txtBuscarProducto" layoutX="226.0" layoutY="14.0" prefHeight="25.0" prefWidth="190.0" promptText="Buscar por nombre, o por codigo" />
+      <Label layoutX="151.0" layoutY="18.0" text="Buscar" />
+      <TableView fx:id="tblProductos" layoutX="35.0" layoutY="60.0" prefHeight="281.0" prefWidth="530.0">
+        <columns>
+          <TableColumn fx:id="colSeleccion" prefWidth="97.0" text="Seleccion" />
+          <TableColumn fx:id="colCodigo" prefWidth="138.0" text="Codigo" />
+            <TableColumn fx:id="colNombre" prefWidth="202.0" text="Nombre" />
+            <TableColumn fx:id="colPrecio" prefWidth="92.0" text="Precio" />
+        </columns>
+      </TableView>
+      <Button fx:id="accBtnSalir" layoutX="512.0" layoutY="361.0" mnemonicParsing="false" onAction="#accBtnSalir" prefHeight="25.0" prefWidth="53.0" text="Salir" />
+      <Button fx:id="btnAgregar" layoutX="390.0" layoutY="361.0" mnemonicParsing="false" onAction="#accBtnAgregar" text="Agregar" />
+   </children>
+</AnchorPane>

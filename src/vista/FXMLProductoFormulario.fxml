@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+
+<AnchorPane id="AnchorPane" prefHeight="550.0" prefWidth="700.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLProductoFormularioController">
+    
+    <children>
+        <!-- Título -->
+        <Label layoutX="20.0" layoutY="20.0" text="Formulario de Producto" textFill="#2c3e50">
+            <font>
+                <Font name="System Bold" size="18.0" />
+            </font>
+        </Label>
+        
+        <!-- Panel izquierdo - Información del producto -->
+        <VBox layoutX="20.0" layoutY="60.0" prefHeight="400.0" prefWidth="350.0" spacing="15.0">
+            <padding>
+                <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
+            </padding>
+            
+            <!-- Código -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="Código:" />
+                <TextField fx:id="txtCodigo" prefWidth="200.0" promptText="Código del producto" />
+            </HBox>
+            
+            <!-- Nombre -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="Nombre:" />
+                <TextField fx:id="txtNombre" prefWidth="200.0" promptText="Nombre del producto" />
+            </HBox>
+            
+            <!-- Precio Compra -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="Precio Compra:" />
+                <TextField fx:id="txtPrecioCompra" prefWidth="200.0" promptText="0.00" />
+            </HBox>
+            
+            <!-- PVP Menor -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="PVP x Menor:" />
+                <TextField fx:id="txtPvpMenor" prefWidth="200.0" promptText="0.00" />
+            </HBox>
+            
+            <!-- PVP Mayor -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="PVP x Mayor:" />
+                <TextField fx:id="txtPvpMayor" prefWidth="200.0" promptText="0.00" />
+            </HBox>
+            
+            <!-- Stock -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label prefWidth="120.0" text="Stock:" />
+                <TextField fx:id="txtStock" prefWidth="200.0" promptText="0" />
+            </HBox>
+            
+            <!-- Checkboxes -->
+            <VBox spacing="10.0">
+                <CheckBox fx:id="chkAplicaIVA" text="Aplica IVA" />
+                <CheckBox fx:id="chkEstado" text="Activo" selected="true" />
+            </VBox>
+        </VBox>
+        
+        <!-- Panel derecho - Imagen del producto -->
+        <VBox layoutX="400.0" layoutY="60.0" prefHeight="400.0" prefWidth="250.0" spacing="15.0" 
+              style="-fx-border-color: #bdc3c7; -fx-border-width: 1px; -fx-border-radius: 5px;">
+            <padding>
+                <Insets top="20.0" right="20.0" bottom="20.0" left="20.0" />
+            </padding>
+            
+            <Label text="Imagen del Producto" textAlignment="CENTER">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            
+            <!-- Contenedor de la imagen -->
+            <StackPane prefHeight="200.0" prefWidth="200.0" 
+                      style="-fx-border-color: #ecf0f1; -fx-border-width: 2px; -fx-border-radius: 5px; -fx-background-color: #f8f9fa;">
+                <ImageView fx:id="imgProducto" fitHeight="180.0" fitWidth="180.0" 
+                          preserveRatio="true" pickOnBounds="true" />
+            </StackPane>
+            
+            <!-- Botón para seleccionar imagen -->
+            <Button fx:id="btnSeleccionarImagen" onAction="#accBtnSeleccionarImagen" 
+                   text="Seleccionar Imagen" prefWidth="200.0" 
+                   style="-fx-background-color: #3498db; -fx-text-fill: white;" />
+            
+            <Label text="Formatos: PNG, JPG, JPEG, GIF, BMP" textAlignment="CENTER" 
+                   textFill="#7f8c8d" wrapText="true">
+                <font>
+                    <Font size="10.0" />
+                </font>
+            </Label>
+        </VBox>
+        
+        <!-- Botones de acción -->
+        <HBox layoutX="20.0" layoutY="480.0" prefHeight="50.0" prefWidth="660.0" 
+              spacing="20.0" alignment="CENTER">
+            <Button fx:id="btnGuardar" onAction="#accBtnGuardar" text="Guardar" 
+                   prefWidth="120.0" 
+                   style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" />
+            <Button fx:id="btnCancelar" onAction="#accBtnCancelar" text="Cancelar" 
+                   prefWidth="120.0" 
+                   style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" />
+        </HBox>
+        
+        <!-- Línea separadora -->
+        <!--<Line endX="660.0" layoutX="20.0" layoutY="470.0" startX="0.0" stroke="#bdc3c7" />-->
+    </children>
+    
+</AnchorPane>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane id="AnchorPane" prefHeight="501.0" prefWidth="658.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLProductosController">
+   <children>
+      <TableView fx:id="tblProductos" layoutX="30.0" layoutY="103.0" onMouseClicked="#onMouseClick" prefHeight="295.0" prefWidth="586.0">
+        <columns>
+          <TableColumn fx:id="colId" prefWidth="58.0" text="ID" />
+          <TableColumn fx:id="colCodigo" prefWidth="87.0" text="Codigo" />
+            <TableColumn fx:id="colNombre" prefWidth="86.0" text="Nombre" />
+            <TableColumn fx:id="colCompra" prefWidth="69.0" text="P Compra" />
+            <TableColumn fx:id="colPvpMenor" prefWidth="70.0" text="PVP Menor" />
+            <TableColumn fx:id="colPvpMayor" prefWidth="72.0" text="PVP Mayor" />
+            <TableColumn fx:id="colStock" prefWidth="64.0" text="Stock" />
+            <TableColumn fx:id="colIva" prefWidth="36.0" text="Iva" />
+            <TableColumn fx:id="colEstado" prefWidth="43.0" text="Estado" />
+        </columns>
+      </TableView>
+      <TextField fx:id="txtBuscar" layoutX="126.0" layoutY="44.0" prefHeight="18.0" prefWidth="393.0" promptText="Ingrese nombre, codigo para buscar" />
+      <Button fx:id="btnCancelar" layoutX="554.0" layoutY="435.0" mnemonicParsing="false" onAction="#accBtnCancelar" text="Cancelar" />
+      <Button fx:id="btnAgregar" layoutX="460.0" layoutY="435.0" mnemonicParsing="false" onAction="#accBtnAgregar" text="Agregar" />
+   </children>
+</AnchorPane>
