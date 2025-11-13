@@ -534,5 +534,5 @@ public class FXMLFacturaController implements Initializable {
             // mod_general.mod.showError("No se pudo abrir el formulario de cliente");
         }
     }
-    
+    ///dfsdfsdfsdf
 }
