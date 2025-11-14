@@ -36,6 +36,8 @@ public class ServicioImpresion {
     // (Puedes mover este formato a una clase de utilidades)
     private final DecimalFormat formatoDosDecimales = new DecimalFormat("0.00");
 
+    
+    
     /**
      * Genera el contenido de texto plano del ticket basado en los datos.
      * @param datos El DTO con toda la información.

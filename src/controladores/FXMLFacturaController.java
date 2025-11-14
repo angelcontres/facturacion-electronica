@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.UnaryOperator;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
@@ -34,11 +35,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -139,19 +142,17 @@ public class FXMLFacturaController implements Initializable {
     
     private final DecimalFormat formatoDosDecimales = new DecimalFormat("0.00");
     @FXML
-    private Button btn_buscarCliente;
-    @FXML
     private Button btn_anadirProducto;
     @FXML
     private Button btn_eliminarDetalle;
-    @FXML
-    private TextField txt_observaciones;
     
     private final ServicioImpresion servicioImpresion = new ServicioImpresion();
     
     private FacturaJpaController gestorFactura;
     private BigDecimal idFacturaGuardada;
-    
+    @FXML
+    private CheckBox chboxConsumidorFInal;
+    private Cliente clienteConsumidorFinal; // Para guardar el cliente 99999
     /**
      * Initializes the controller class.
      */
@@ -167,7 +168,21 @@ public class FXMLFacturaController implements Initializable {
         this.gestorProducto = new ProductoJpaController(emf);
         this.gestorFactura = new FacturaJpaController(emf); 
         this.gestorDet = new DetallefacturaJpaController(emf);
-        btn_imprimir.setDisable(true); // Y deshabilitar el botón al inicio
+        btn_imprimir.setDisable(true); 
+        
+        cargarClienteConsumidorFinal();
+
+        // 2. Añadimos la acción
+        chboxConsumidorFInal.setOnAction(event -> {
+            if (chboxConsumidorFInal.isSelected()) {
+                // Si el usuario lo MARCA
+                cargarDatosConsumidorFinal();
+            } else {
+                // Si el usuario lo DESMARCA
+                limpiarCamposCliente();
+                habilitarCamposCliente(true);
+            }
+        });
         
         cargarNumeroFacturaPreview();
         configurarTablaDetalleFactura();
@@ -175,7 +190,84 @@ public class FXMLFacturaController implements Initializable {
         addFila();
         calcularTotalesGenerales();
         
+        UnaryOperator<TextFormatter.Change> filtro = change -> {
+            
+            // Obtiene el texto que *resultaría* después del cambio
+            String nuevoTexto = change.getControlNewText();
+
+            // 2. Comprueba las dos condiciones:
+            //    - Que el nuevo texto tenga 10 caracteres o menos
+            //    - Que el nuevo texto SÓLO contenga dígitos (usando una expresión regular)
+            if (nuevoTexto.length() <= 10 && nuevoTexto.matches("\\d*")) {
+                // Si cumple, acepta el cambio
+                return change;
+            }
+            
+            // 3. Si no cumple (largo > 10 o no es dígito), rechaza el cambio
+            return null;
+        };
+        TextFormatter<String> formatter = new TextFormatter<>(filtro);
+        
+        txt_documento.setTextFormatter(formatter);
     }    
+    
+    /**
+     * Busca en la BD al cliente "Consumidor Final" (9999...)
+     * y lo guarda en memoria para usarlo rápidamente.
+     */
+    private void cargarClienteConsumidorFinal() {
+        // Hacemos esto en un hilo para no bloquear la UI
+        new Thread(() -> {
+            try {
+                // (Usa el JpaController o un EM)
+                this.clienteConsumidorFinal = gestorCliente.buscarClientePorCedulaExacta("9999999999");
+            } catch (Exception e) {
+                this.clienteConsumidorFinal = null;
+                // Si no existe, la app debe mostrar un error
+                Platform.runLater(() -> {
+                    mod_general.mod.showError(
+                        "Error Crítico: El cliente '9999999999' (Consumidor Final) no existe en la base de datos.");
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Rellena los TextFields con los datos del Consumidor Final
+     * y los bloquea.
+     */
+    private void cargarDatosConsumidorFinal() {
+        if (this.clienteConsumidorFinal != null) {
+            txt_documento.setText(clienteConsumidorFinal.getCliCedula());
+            txt_nombres.setText(clienteConsumidorFinal.getCliNombres());
+            txt_apellidos.setText(clienteConsumidorFinal.getCliApellidos());
+            txt_telefono.setText(clienteConsumidorFinal.getCliTelefono());
+            txt_correo.setText(clienteConsumidorFinal.getCliCorreo());
+            txt_direccion.setText(clienteConsumidorFinal.getCliDireccion());
+            
+            // Bloqueamos los campos
+            habilitarCamposCliente(false);
+        } else {
+            // Si el cliente 999 no se cargó, desmarca la casilla
+            mod_general.mod.showError(
+                "No se pudo cargar el Consumidor Final. Revise la base de datos.");
+            chboxConsumidorFInal.setSelected(false);
+        }
+    }
+    
+    /**
+     * Habilita o deshabilita todos los campos de texto del cliente.
+     * @param habilitar true para habilitar, false para deshabilitar.
+     */
+    private void habilitarCamposCliente(boolean habilitar) {
+        txt_documento.setDisable(!habilitar);
+        txt_nombres.setDisable(!habilitar);
+        txt_apellidos.setDisable(!habilitar);
+        txt_telefono.setDisable(!habilitar);
+        txt_correo.setDisable(!habilitar);
+        txt_direccion.setDisable(!habilitar);
+    }
+    
     
     /**
     * Añade una nueva fila vacía a la tabla, 
@@ -547,14 +639,35 @@ public class FXMLFacturaController implements Initializable {
             em.getTransaction().begin(); // ⭐️ ¡CLAVE 1: Iniciar la transacción de JPA!
 
             // --- 3. Obtener/Validar el Cliente (Modo JPA) ---
-            // (Asumo que tu gestorCliente tiene un método o que puedes usar esta consulta)
             Cliente cliente;
             try {
                 TypedQuery<Cliente> query = em.createNamedQuery("Cliente.findByCliCedula", Cliente.class);
                 query.setParameter("cliCedula", txt_documento.getText());
                 cliente = query.getSingleResult(); // Lanza excepción si no lo encuentra
             } catch (NoResultException e) {
-                throw new Exception("Cliente no encontrado con la cédula: " + txt_documento.getText());
+                // --- CLIENTE NO ENCONTRADO, PROCEDEMOS A CREARLO ---
+
+                // 2. Validamos que los campos del nuevo cliente estén llenos
+                if (txt_nombres.getText().isEmpty() || txt_apellidos.getText().isEmpty()) {
+                    // Si no hay nombre/apellido, no podemos crear. Detenemos la transacción.
+                    throw new Exception("Cliente no existe. Por favor, complete los campos Nombres y Apellidos para registrarlo.");
+                }
+
+                // 3. Creamos el nuevo objeto Cliente
+                cliente = new Cliente();
+                
+                // 4. Llenamos el objeto con los datos de los TextFields
+                cliente.setCliCedula(txt_documento.getText().trim());
+                cliente.setCliNombres(txt_nombres.getText().trim());
+                cliente.setCliApellidos(txt_apellidos.getText().trim());
+                cliente.setCliTelefono(txt_telefono.getText().trim());
+                cliente.setCliCorreo(txt_correo.getText().trim());
+                cliente.setCliDireccion(txt_direccion.getText().trim());
+                // (Si tienes un estado por defecto, ej. "A" por Activo, ponlo aquí)
+                cliente.setCliEstado("A"); 
+
+                // 5. Persistimos el nuevo cliente DENTRO de la transacción actual
+                em.persist(cliente);
             }
 
             // --- 4. Generar Número de Factura (Modo PROCEDURE de Oracle) ---
@@ -569,7 +682,7 @@ public class FXMLFacturaController implements Initializable {
                  throw new Exception("No se encontró el correlativo de factura. Configure la tabla CORRELATIVOS.");
             }
 
-            // ⭐️ ¡CLAVE 3: Llamar al PROCEDURE (Sintaxis correcta)!
+            // Llamar al PROCEDURE (Sintaxis correcta)!
             try {
                 // 1. Crear la consulta al procedimiento por su nombre
                 StoredProcedureQuery query = em.createStoredProcedureQuery("sp_generaNumFac");
@@ -596,7 +709,7 @@ public class FXMLFacturaController implements Initializable {
                 throw new Exception("Error al ejecutar el PROCEDIMIENTO sp_generaNumFac. Revise los permisos.", e);
             }
 
-            // ⭐️ ¡CLAVE 4: Incrementar el correlativo (Modo JPA)!
+            // Incrementar el correlativo (Modo JPA)!
             // Tu SP solo LEE el secuencial+1, pero no lo actualiza.
             // Por lo tanto, este UPDATE sigue siendo necesario y es correcto.
             em.createNativeQuery("UPDATE CORRELATIVOS SET SECUENCIA = SECUENCIA + 1 WHERE MOVIMIENTO='FACTURA' AND TERMINAL=1")
@@ -676,7 +789,6 @@ public class FXMLFacturaController implements Initializable {
         
     }
 
-    // (Asegúrate de tener este método fun_limpiar() en tu controlador)
     private void fun_limpiar() {
         // Limpia cabecera
         txt_documento.clear();
@@ -837,12 +949,21 @@ public class FXMLFacturaController implements Initializable {
     }
 
     private void limpiarCamposCliente() {
+        txt_documento.clear(); // <-- Asegúrate de que esto esté aquí
         txt_nombres.clear();
         txt_apellidos.clear();
         txt_telefono.clear();
         txt_correo.clear();
         txt_direccion.clear();
-    } 
+        
+        // ⭐️ Desmarca el CheckBox si se limpia manualmente
+        if (chboxConsumidorFInal.isSelected()) {
+            chboxConsumidorFInal.setSelected(false);
+        }
+        
+        // Y nos aseguramos de que los campos estén habilitados
+        habilitarCamposCliente(true);
+    }
     
     private void abrirModalBuscar(int fila) { // <-- AHORA ACEPTA LA FILA
         try{
