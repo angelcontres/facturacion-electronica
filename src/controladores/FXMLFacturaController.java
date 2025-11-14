@@ -45,9 +45,16 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.BigIntegerStringConverter;
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
+import javax.persistence.ParameterMode;
+import javax.persistence.Query;
+import javax.persistence.StoredProcedureQuery;
+import javax.persistence.TypedQuery;
 import modelos.Cliente;
 import modelos.Detallefactura;
+import modelos.Factura;
 import modelos.Producto;
 import util.JPAUtil;
 
@@ -143,15 +150,35 @@ public class FXMLFacturaController implements Initializable {
         this.gestorCliente = new ClienteJpaController(emf);
         this.gestorProducto = new ProductoJpaController(emf);
         configurarTablaDetalleFactura();
+        calcularTotalesGenerales();
         addFila();
     }    
     
-    private void addFila(){
-        Detallefactura det = new Detallefactura();
-        
-        tbl_detallefactura.getItems().add(det);
-        
-    }
+    /**
+    * Añade una nueva fila vacía a la tabla, 
+    * solo si la última fila actual ya tiene un producto.
+    */
+   private void addFila() {
+       ObservableList<Detallefactura> items = tbl_detallefactura.getItems();
+
+       // 1. Revisar si la tabla está vacía
+       if (items.isEmpty()) {
+           tbl_detallefactura.getItems().add(new Detallefactura());
+           return; // Añade la primera fila y termina
+       }
+
+       // 2. Si no está vacía, obtener la última fila
+       Detallefactura ultimaFila = items.get(items.size() - 1);
+
+       // 3. Revisar si la última fila ya tiene un producto
+       //    (Si no tiene producto, significa que YA es la fila "nueva")
+       if (ultimaFila.getProdId() != null) {
+           // La última fila SÍ tiene un producto, entonces añadimos una nueva vacía
+           tbl_detallefactura.getItems().add(new Detallefactura());
+       }
+
+       // Si la última fila NO tiene producto (está vacía), no hace nada.
+   }
     
     private void configurarTablaDetalleFactura() {
         tbl_detallefactura.setEditable(true);
@@ -246,7 +273,7 @@ public class FXMLFacturaController implements Initializable {
                 tbl_detallefactura.refresh();
                 
                 // (Recuerda recalcular tus totales generales aquí)
-                // sumarTotalesGenerales();
+                calcularTotalesGenerales();
             }
         });
         
@@ -257,50 +284,66 @@ public class FXMLFacturaController implements Initializable {
         col_total.setCellFactory(crearFabricaDeCeldasFormateada(formatoDosDecimales));
         
         col_codigo.setOnEditCommit(evento -> {
-            // Obtiene la fila (Detallefactura) que se está editando
             Detallefactura det = evento.getRowValue();
             String nuevoCodigo = evento.getNewValue();
 
+            // ... (Tu código para limpiar la fila si el código es vacío) ...
             if (nuevoCodigo == null || nuevoCodigo.trim().isEmpty()) {
-                det.setProdId(null); // Limpiar el producto si el código está vacío
+                det.setProdId(null);
+                det.setCantidad(null);
+                det.setProdPvp(null);
+                det.setIva(null);
+                det.setTotal(null);
+                // ¡No hay setProdAplicaiva que limpiar!
                 tbl_detallefactura.refresh();
+                calcularTotalesGenerales(); 
                 return;
             }
 
-            // 1. Buscar el producto en la base de datos
             Producto objProd = gestorProducto.buscarPorCodigo(nuevoCodigo);
 
             if (objProd != null) {
-                // 2. ¡Esta es la línea clave! Asignas el objeto Producto completo al detalle
                 det.setProdId(objProd);
                 det.setProdNombre(objProd.getProdNombre());
-                // 3. (Recomendado) Asignar una cantidad por defecto si es una fila nueva
-                if (det.getCantidad() == null) {
-                    det.setCantidad(new BigInteger("1")); // O 1, dependiendo del tipo de dato
-                }
-                det.setProdPvp(objProd.getProdPvpxmenor());
-                det.setIva(det.calcularIva(new BigDecimal("0.15"), det.getProdId().getProdPvpxmenor()));
-                // 4. (Recomendado) Reactiva tu lógica para actualizar totales
-                det.setTotal(det.sumartotal(det.getCantidad(), det.getProdId().getProdPvpxmenor()));
-                // det.actualizarTotales(); // Necesitarás un método en tu entidad Detallefactura
-                // sumarTotales(); // Un método en este controlador para sumar todos los detalles
-                
-                tbl_detallefactura.refresh(); // Refresca la tabla para mostrar los nuevos datos
 
-                // 5. (Recomendado) Reactiva tu lógica para añadir una nueva fila
-                //agregarFilasiEsUltima(evento.getTablePosition().getRow());
+                if (det.getCantidad() == null) {
+                    det.setCantidad(new BigInteger("1"));
+                }
+
+                det.setProdPvp(objProd.getProdPvpxmenor());
+
+                // --- INICIO DE LÓGICA CORREGIDA ---
+
+                // 1. Calcular el subtotal de la fila (Cant * PVP)
+                BigDecimal subtotalFila = det.calcularSubtotalFila(det.getCantidad(), det.getProdPvp());
+                det.setTotal(subtotalFila); // 'total' es el subtotal de la fila
+                
+                // 2. Calcular IVA (SOLO si aplica)
+                // Se lee directo del producto
+                Short aplicaIva = objProd.getProdAplicaiva(); 
+
+                if (aplicaIva != null && aplicaIva == 1) {
+                    det.setIva(det.calcularIva(new BigDecimal("0.15"), subtotalFila));
+                } else {
+                    det.setIva(BigDecimal.ZERO); // No aplica IVA
+                }
+
+                // ¡¡NO SE GUARDA EL prodAplicaiva en el detalle!!
+                // det.setProdAplicaiva(objProd.getProdAplicaiva()); <-- Esta línea se omite
+
+                // --- FIN DE LÓGICA CORREGIDA ---
+
+                tbl_detallefactura.refresh();
                 addFila();
+                calcularTotalesGenerales(); // <-- Llamar al método de totales
+
             } else {
-                // Si el producto no existe, limpiamos la referencia
+                // ... (tu código para limpiar si no se encuentra el producto) ...
                 det.setProdId(null);
                 det.setCantidad(null);
+                // ... etc
                 tbl_detallefactura.refresh();
-
-                // Muestra tu mensaje de error
-                // General.Mod_general.fun_mensajeInformacion("No existe el producto", this.getClass());
-
-                // (Opcional) Limpiar el código que escribió el usuario
-                // det.getProdId().setProdCod(""); // Esto no funcionará, necesitas un campo temporal
+                calcularTotalesGenerales(); 
             }
         });
         
@@ -321,6 +364,7 @@ public class FXMLFacturaController implements Initializable {
 
                         // Llamar al método con el índice
                         abrirModalBuscar(filaActual); 
+                        calcularTotalesGenerales();
                     });
                 }
 
@@ -349,12 +393,12 @@ public class FXMLFacturaController implements Initializable {
                 // Recalcular el total de la fila (SOLO si ya hay un producto)
                 if (det.getProdId() != null) {
                     // Usamos los mismos métodos que usaste en col_codigo
-                    det.setProdPvp(det.getProdId().getProdPvpxmenor());
+                    
                     det.setIva(det.calcularIva(new BigDecimal("0.15"), det.getProdId().getProdPvpxmenor()));
                     det.setTotal(det.sumartotal(nuevaCantidad, det.getProdId().getProdPvpxmenor()));
-
+                    
                     tbl_detallefactura.refresh(); // Refrescar la fila
-
+                    calcularTotalesGenerales();
                     // Aquí deberías llamar a un método que sume los totales
                     // de TODAS las filas y actualice los TextField de abajo (txt_total, txt_iva, etc.)
                     // sumarTotalesGenerales(); 
@@ -446,7 +490,168 @@ public class FXMLFacturaController implements Initializable {
     
     @FXML
     private void acc_grabar(ActionEvent event) {
+
+        // --- 1. Validaciones Previas ---
+        List<Detallefactura> detallefac = tbl_detallefactura.getItems().stream()
+                .filter(d -> d.getProdId() != null) // Filtra solo filas con productos
+                .toList();
+
+        if (txt_documento.getText().isEmpty() || detallefac.isEmpty()) {
+            mod_general.mod.showError(
+                    "Complete los datos del cliente y al menos un producto.");
+            return;
+        }
+
+        // --- 2. Iniciar EntityManager y Transacción ---
+        EntityManager em = null;
+        String facNumero = null;
+
+        try {
+            em = JPAUtil.getEntityManagerFactory().createEntityManager();
+            em.getTransaction().begin(); // ⭐️ ¡CLAVE 1: Iniciar la transacción de JPA!
+
+            // --- 3. Obtener/Validar el Cliente (Modo JPA) ---
+            // (Asumo que tu gestorCliente tiene un método o que puedes usar esta consulta)
+            Cliente cliente;
+            try {
+                TypedQuery<Cliente> query = em.createNamedQuery("Cliente.findByCliCedula", Cliente.class);
+                query.setParameter("cliCedula", txt_documento.getText());
+                cliente = query.getSingleResult(); // Lanza excepción si no lo encuentra
+            } catch (NoResultException e) {
+                throw new Exception("Cliente no encontrado con la cédula: " + txt_documento.getText());
+            }
+
+            // --- 4. Generar Número de Factura (Modo PROCEDURE de Oracle) ---
         
+            // ⭐️ ¡CLAVE 2: Bloquear la fila de correlativos (Sintaxis ORACLE)!
+            // (Esto está bien y es necesario para evitar números duplicados)
+            try {
+                em.createNativeQuery("SELECT SECUENCIA FROM CORRELATIVOS WHERE MOVIMIENTO='FACTURA' AND TERMINAL=1 FOR UPDATE")
+                    .getSingleResult(); // Esto bloquea la fila hasta el commit/rollback
+
+            } catch (NoResultException e) {
+                 throw new Exception("No se encontró el correlativo de factura. Configure la tabla CORRELATIVOS.");
+            }
+
+            // ⭐️ ¡CLAVE 3: Llamar al PROCEDURE (Sintaxis correcta)!
+            try {
+                // 1. Crear la consulta al procedimiento por su nombre
+                StoredProcedureQuery query = em.createStoredProcedureQuery("sp_generaNumFac");
+
+                // 2. Registrar los parámetros IN (Entrada)
+                query.registerStoredProcedureParameter(1, String.class, ParameterMode.IN); // p_movimiento
+                query.registerStoredProcedureParameter(2, Integer.class, ParameterMode.IN); // p_terminal
+
+                // 3. Registrar el parámetro OUT (Salida)
+                query.registerStoredProcedureParameter(3, String.class, ParameterMode.OUT); // p_numero_factura
+
+                // 4. Setear los valores de ENTRADA
+                query.setParameter(1, "FACTURA");
+                query.setParameter(2, 1);
+
+                // 5. Ejecutar el procedimiento
+                query.execute();
+
+                // 6. Obtener el valor del parámetro de SALIDA
+                facNumero = (String) query.getOutputParameterValue(3);
+
+            } catch (Exception e) {
+                // Si esto falla, puede ser por permisos (GRANT EXECUTE)
+                throw new Exception("Error al ejecutar el PROCEDIMIENTO sp_generaNumFac. Revise los permisos.", e);
+            }
+
+            // ⭐️ ¡CLAVE 4: Incrementar el correlativo (Modo JPA)!
+            // Tu SP solo LEE el secuencial+1, pero no lo actualiza.
+            // Por lo tanto, este UPDATE sigue siendo necesario y es correcto.
+            em.createNativeQuery("UPDATE CORRELATIVOS SET SECUENCIA = SECUENCIA + 1 WHERE MOVIMIENTO='FACTURA' AND TERMINAL=1")
+                .executeUpdate();
+
+            // --- Fin de la sección de bloqueo y generación de número ---
+
+            if (facNumero == null || facNumero.isEmpty()) {
+                 throw new Exception("El número de factura generado es nulo o vacío.");
+            }
+
+            // ... (El resto del código para buscar cliente, crear Factura y Detalle
+            //      sigue exactamente igual que en la respuesta anterior) ...
+            if (facNumero == null || facNumero.isEmpty()) {
+                 throw new Exception("El número de factura generado es nulo o vacío.");
+            }
+
+            // --- 5. Crear la Cabecera de Factura (Modo JPA) ---
+            Factura factura = new Factura();
+
+            // (Asumo que tu entidad Factura tiene estos setters)
+            factura.setFacNumero(facNumero);
+            factura.setFacFecha(new java.util.Date()); // O usa @PrePersist en la entidad
+            factura.setCliId(cliente); // ⭐️ ¡Se asigna el OBJETO, no el ID!
+            factura.setFacSubtotal(new BigDecimal(txt_subtotal.getText()));
+            factura.setFacSubtotalcero(new BigDecimal(txt_subtotal0.getText()));
+            factura.setFacIva(new BigDecimal(txt_iva.getText()));
+            factura.setFacDescuento(new BigDecimal(txt_descuento.getText())); // Es 0.00
+            factura.setFacTotal(new BigDecimal(txt_total.getText()));
+            factura.setFacEstado("A");
+
+            // (Si tienes la relación bidireccional, prepara la colección)
+            // factura.setDetallefacturaCollection(new ArrayList<>());
+
+            // --- 6. Preparar los Detalles (Modo JPA) ---
+            for (Detallefactura det : detallefac) {
+
+                // ⭐️ ¡CLAVE 5: Enlazar el detalle con la cabecera!
+                det.setFacId(factura); // Asigna el objeto Factura al detalle
+
+                // (Si es bidireccional)
+                // factura.getDetallefacturaCollection().add(det);
+
+                // Persistimos el detalle
+                em.persist(det); 
+            }
+
+            // --- 7. Guardar la Cabecera ---
+            // (Si no es bidireccional con Cascade.ALL, persistimos la factura ahora)
+            em.persist(factura);
+
+            // ⭐️ ¡CLAVE 6: Éxito! Confirmar la Transacción
+            em.getTransaction().commit(); 
+
+            mod_general.mod.showConfirmacion(
+                    "Factura grabada correctamente (JPA). Número: " + facNumero);
+
+            fun_limpiar(); // Limpia la interfaz
+
+        } catch (Exception e) {
+            // ⭐️ ¡CLAVE 7: Error! Revertir la Transacción
+            if (em != null && em.getTransaction().isActive()) {
+                em.getTransaction().rollback(); // Deshace TODOS los cambios
+            }
+
+            mod_general.mod.showError("Error al grabar factura: " + e.getMessage());
+            e.printStackTrace(); // Útil para depurar en la consola
+
+        } finally {
+            // ⭐️ ¡CLAVE 8: Cerrar el EntityManager!
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    // (Asegúrate de tener este método fun_limpiar() en tu controlador)
+    private void fun_limpiar() {
+        // Limpia cabecera
+        txt_documento.clear();
+        limpiarCamposCliente(); // Tu método para limpiar datos del cliente
+        txt_factura.clear(); // Limpia el número de factura si lo estabas mostrando
+
+        // Limpia la tabla (items de la GUI)
+        tbl_detallefactura.getItems().clear(); 
+
+        // Añade la primera fila vacía para empezar de nuevo
+        addFila(); 
+
+        // Recalcula los totales (se pondrán en 0.00)
+        calcularTotalesGenerales(); 
     }
 
     @FXML
@@ -543,12 +748,58 @@ public class FXMLFacturaController implements Initializable {
             // mod_general.mod.showError("No se pudo abrir el formulario de cliente");
         }
     }
+    
+    /**
+     * Calcula los totales generales de la factura (subtotales, iva, descuento y total)
+     * y los muestra en los campos de texto correspondientes.
+     */
+    private void calcularTotalesGenerales() {
+        BigDecimal subtotalConIVA = BigDecimal.ZERO;
+        BigDecimal subtotalCero = BigDecimal.ZERO;
+        BigDecimal totalIVA = BigDecimal.ZERO;
 
-    @FXML
-    private void buscarCliente(ActionEvent event) {
+        // 1. El descuento siempre será CERO
+        BigDecimal descuento = BigDecimal.ZERO; 
+
+        BigDecimal totalGeneral = BigDecimal.ZERO;
+
+        List<Detallefactura> detallesValidos = tbl_detallefactura.getItems().stream()
+                .filter(det -> det.getProdId() != null && det.getTotal() != null)
+                .toList();
+
+        for (Detallefactura det : detallesValidos) {
+            BigDecimal totalFila = det.getTotal(); // Este es el Subtotal (Cant * PVP)
+
+            // ¡RIESGO! Esto consulta el estado ACTUAL del producto.
+            Short aplicaIva = det.getProdId().getProdAplicaiva(); 
+
+            if (aplicaIva != null && aplicaIva == 1) {
+                // Producto SÍ aplica IVA
+                BigDecimal ivaFila = (det.getIva() != null) ? det.getIva() : BigDecimal.ZERO;
+                subtotalConIVA = subtotalConIVA.add(totalFila);
+                totalIVA = totalIVA.add(ivaFila);
+            } else {
+                // Producto NO aplica IVA (Subtotal 0%)
+                subtotalCero = subtotalCero.add(totalFila);
+            }
+        }
+
+        // 2. Ya no leemos txt_descuento. Se queda en CERO.
+
+        // 3. Calcular el total general
+        totalGeneral = subtotalConIVA.add(subtotalCero).add(totalIVA).subtract(descuento);
+
+        // 4. Setear los valores en los TextFields (formateados)
+        txt_subtotal.setText(formatoDosDecimales.format(subtotalConIVA));
+        txt_subtotal0.setText(formatoDosDecimales.format(subtotalCero));
+        txt_iva.setText(formatoDosDecimales.format(totalIVA));
+
+        // Actualizamos el campo de descuento para que MUESTRE 0.00
+        txt_descuento.setText(formatoDosDecimales.format(descuento)); 
+
+        txt_total.setText(formatoDosDecimales.format(totalGeneral));
     }
 
-    
     
     
 }

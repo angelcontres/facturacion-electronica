@@ -165,5 +165,23 @@ public class Detallefactura implements Serializable {
     public BigDecimal calcularIva(BigDecimal iva, BigDecimal producto){
         return iva.multiply(producto);
     }
-    
+    /**
+    * Calcula el subtotal de una fila (Cantidad * Precio).
+    * Esta es una función de ayuda para el controlador.
+    * * @param cantidad La cantidad de productos (puede ser null).
+    * @param precio El precio unitario (puede ser null).
+    * @return El subtotal (cantidad * precio), o BigDecimal.ZERO si algo es null.
+    */
+    public BigDecimal calcularSubtotalFila(BigInteger cantidad, BigDecimal precio) {
+        // Manejar nulos para evitar un error (NullPointerException)
+        if (cantidad == null || precio == null) {
+            return BigDecimal.ZERO;
+        }
+
+        // Convertir la cantidad BigInteger a BigDecimal para poder multiplicar
+        BigDecimal bigDecimalCantidad = new BigDecimal(cantidad);
+
+        // Realizar la multiplicación y devolver el resultado
+        return precio.multiply(bigDecimalCantidad);
+    }
 }
