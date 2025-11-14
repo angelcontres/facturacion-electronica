@@ -149,6 +149,7 @@ public class FXMLFacturaController implements Initializable {
         EntityManagerFactory emf = JPAUtil.getEntityManagerFactory();
         this.gestorCliente = new ClienteJpaController(emf);
         this.gestorProducto = new ProductoJpaController(emf);
+        cargarNumeroFacturaPreview();
         configurarTablaDetalleFactura();
         calcularTotalesGenerales();
         addFila();
@@ -619,7 +620,7 @@ public class FXMLFacturaController implements Initializable {
                     "Factura grabada correctamente (JPA). Número: " + facNumero);
 
             fun_limpiar(); // Limpia la interfaz
-
+            cargarNumeroFacturaPreview();
         } catch (Exception e) {
             // ⭐️ ¡CLAVE 7: Error! Revertir la Transacción
             if (em != null && em.getTransaction().isActive()) {
@@ -656,17 +657,18 @@ public class FXMLFacturaController implements Initializable {
 
     @FXML
     private void acc_anular(ActionEvent event) {
-        
+        //Anular
     }
 
     @FXML
     private void acc_imprimir(ActionEvent event) {
-        
+        //imprimir
     }
 
     @FXML
     private void acc_cancelar(ActionEvent event) {
-        
+        limpiarCamposCliente();
+        ap_factura.setVisible(false);
     }
 
     @FXML
@@ -801,5 +803,60 @@ public class FXMLFacturaController implements Initializable {
     }
 
     
-    
+    /**
+    * Carga el número de factura (como vista previa) en un hilo separado
+    * para no congelar la interfaz de usuario al iniciar la pantalla.
+    */
+   private void cargarNumeroFacturaPreview() {
+
+       // Hacemos esto en un hilo nuevo para no congelar la UI
+       new Thread(() -> {
+           EntityManager em = null;
+           String previewNumero = "Error al cargar"; // Mensaje por si falla
+
+           try {
+               em = JPAUtil.getEntityManagerFactory().createEntityManager();
+
+               // 1. Crear la consulta al procedimiento (igual que en grabar)
+               StoredProcedureQuery query = em.createStoredProcedureQuery("sp_generaNumFac");
+
+               // 2. Registrar los parámetros
+               query.registerStoredProcedureParameter(1, String.class, ParameterMode.IN); // p_movimiento
+               query.registerStoredProcedureParameter(2, Integer.class, ParameterMode.IN); // p_terminal
+               query.registerStoredProcedureParameter(3, String.class, ParameterMode.OUT); // p_numero_factura
+
+               // 3. Setear los valores de ENTRADA
+               query.setParameter(1, "FACTURA");
+               query.setParameter(2, 1);
+
+               // 4. Ejecutar el procedimiento
+               query.execute();
+
+               // 5. Obtener el valor de SALIDA
+               previewNumero = (String) query.getOutputParameterValue(3);
+
+           } catch (Exception e) {
+               // Si falla (ej. no hay correlativo), el texto mostrará "Error al cargar"
+               System.err.println("Error al cargar preview de factura: " + e.getMessage());
+               e.printStackTrace();
+           } finally {
+               if (em != null) {
+                   em.close(); // Cerramos el EntityManager de esta lectura
+               }
+           }
+
+           // 6. Volver al Hilo de JavaFX para actualizar el TextField
+           // (No puedes tocar la UI desde el hilo de fondo directamente)
+           String finalNumero = previewNumero;
+           Platform.runLater(() -> {
+               txt_factura.setText(finalNumero);
+               // (Opcional) Hacemos el campo no editable si solo es de muestra
+               txt_factura.setEditable(false); 
+           });
+
+       }).start(); // Inicia el hilo
+   }
+
+
+   
 }
