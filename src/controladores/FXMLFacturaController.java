@@ -6,14 +6,19 @@ package controladores;
 
 import controladores.FXMLClientesFormularioController;
 import controladoresjpa.ClienteJpaController;
+import controladoresjpa.DetallefacturaJpaController;
+import controladoresjpa.FacturaJpaController;
 import controladoresjpa.ProductoJpaController;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
@@ -28,6 +33,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -42,6 +48,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.BigIntegerStringConverter;
@@ -56,7 +63,9 @@ import modelos.Cliente;
 import modelos.Detallefactura;
 import modelos.Factura;
 import modelos.Producto;
+import modelos.TicketDatos;
 import util.JPAUtil;
+import util.ServicioImpresion;
 
 /**
  * FXML Controller class
@@ -126,6 +135,8 @@ public class FXMLFacturaController implements Initializable {
     
     private ProductoJpaController gestorProducto;
     
+    private DetallefacturaJpaController gestorDet;
+    
     private final DecimalFormat formatoDosDecimales = new DecimalFormat("0.00");
     @FXML
     private Button btn_buscarCliente;
@@ -135,6 +146,11 @@ public class FXMLFacturaController implements Initializable {
     private Button btn_eliminarDetalle;
     @FXML
     private TextField txt_observaciones;
+    
+    private final ServicioImpresion servicioImpresion = new ServicioImpresion();
+    
+    private FacturaJpaController gestorFactura;
+    private BigDecimal idFacturaGuardada;
     
     /**
      * Initializes the controller class.
@@ -149,10 +165,16 @@ public class FXMLFacturaController implements Initializable {
         EntityManagerFactory emf = JPAUtil.getEntityManagerFactory();
         this.gestorCliente = new ClienteJpaController(emf);
         this.gestorProducto = new ProductoJpaController(emf);
+        this.gestorFactura = new FacturaJpaController(emf); 
+        this.gestorDet = new DetallefacturaJpaController(emf);
+        btn_imprimir.setDisable(true); // Y deshabilitar el botón al inicio
+        
         cargarNumeroFacturaPreview();
         configurarTablaDetalleFactura();
-        calcularTotalesGenerales();
+        
         addFila();
+        calcularTotalesGenerales();
+        
     }    
     
     /**
@@ -253,27 +275,37 @@ public class FXMLFacturaController implements Initializable {
                         this.getItems().clear();
                     }
                     
-                    // 7. Mostrar el texto formateado
+                    // Mostrar el texto formateado
                     setText((item == null) ? "" : formatoDosDecimales.format(item));
                 }
             }
         });
 
-        // 8. ¡Definir qué pasa cuando el usuario SELECCIONA un nuevo precio!
+        // Definir qué pasa cuando el usuario SELECCIONA un nuevo precio
         col_pvp.setOnEditCommit(event -> {
             Detallefactura det = event.getRowValue();
             BigDecimal nuevoPrecio = event.getNewValue();
 
-            if (nuevoPrecio != null && det.getCantidad() != null) {
+            // Validar que tengamos todo
+            if (nuevoPrecio != null && det.getCantidad() != null && det.getProdId() != null) {
+
                 det.setProdPvp(nuevoPrecio); // Asignar el nuevo precio
-                
-                // Recalcular IVA y Total con el nuevo precio
-                det.setIva(det.calcularIva(new BigDecimal("0.15"), nuevoPrecio));
-                det.setTotal(det.sumartotal(det.getCantidad(), nuevoPrecio));
+
+                // 1. Calcular subtotal de fila (usando el método de tu entidad)
+                BigDecimal subtotalFila = det.sumartotal(det.getCantidad(), nuevoPrecio);
+                det.setTotal(subtotalFila);
+
+                // 2. Revisar si aplica IVA (leyendo "en vivo" del producto)
+                Short aplicaIva = det.getProdId().getProdAplicaiva(); 
+
+                if (aplicaIva != null && aplicaIva == 1) {
+                    // 3. Calcular IVA basado en el subtotal de la fila
+                    det.setIva(det.calcularIva(new BigDecimal("0.15"), subtotalFila));
+                } else {
+                    det.setIva(BigDecimal.ZERO);
+                }
 
                 tbl_detallefactura.refresh();
-                
-                // (Recuerda recalcular tus totales generales aquí)
                 calcularTotalesGenerales();
             }
         });
@@ -313,7 +345,6 @@ public class FXMLFacturaController implements Initializable {
 
                 det.setProdPvp(objProd.getProdPvpxmenor());
 
-                // --- INICIO DE LÓGICA CORREGIDA ---
 
                 // 1. Calcular el subtotal de la fila (Cant * PVP)
                 BigDecimal subtotalFila = det.calcularSubtotalFila(det.getCantidad(), det.getProdPvp());
@@ -329,20 +360,20 @@ public class FXMLFacturaController implements Initializable {
                     det.setIva(BigDecimal.ZERO); // No aplica IVA
                 }
 
-                // ¡¡NO SE GUARDA EL prodAplicaiva en el detalle!!
-                // det.setProdAplicaiva(objProd.getProdAplicaiva()); <-- Esta línea se omite
 
-                // --- FIN DE LÓGICA CORREGIDA ---
 
                 tbl_detallefactura.refresh();
                 addFila();
-                calcularTotalesGenerales(); // <-- Llamar al método de totales
+                calcularTotalesGenerales();
 
             } else {
                 // ... (tu código para limpiar si no se encuentra el producto) ...
                 det.setProdId(null);
                 det.setCantidad(null);
-                // ... etc
+                det.setProdPvp(null);
+                det.setIva(null);
+                det.setTotal(null);
+
                 tbl_detallefactura.refresh();
                 calcularTotalesGenerales(); 
             }
@@ -387,28 +418,32 @@ public class FXMLFacturaController implements Initializable {
             Detallefactura det = event.getRowValue();
             BigInteger nuevaCantidad = event.getNewValue();
 
-            // Validar que la cantidad sea válida (ej. mayor a cero)
             if (nuevaCantidad != null && nuevaCantidad.compareTo(BigInteger.ZERO) > 0) {
                 det.setCantidad(nuevaCantidad);
 
-                // Recalcular el total de la fila (SOLO si ya hay un producto)
                 if (det.getProdId() != null) {
-                    // Usamos los mismos métodos que usaste en col_codigo
-                    
-                    det.setIva(det.calcularIva(new BigDecimal("0.15"), det.getProdId().getProdPvpxmenor()));
-                    det.setTotal(det.sumartotal(nuevaCantidad, det.getProdId().getProdPvpxmenor()));
-                    
-                    tbl_detallefactura.refresh(); // Refrescar la fila
+
+                    // 1. Calcular subtotal de fila (usando el precio que YA está en la fila)
+                    BigDecimal subtotalFila = det.sumartotal(nuevaCantidad, det.getProdPvp());
+                    det.setTotal(subtotalFila);
+
+                    // 2. Revisar si aplica IVA
+                    Short aplicaIva = det.getProdId().getProdAplicaiva(); 
+
+                    if (aplicaIva != null && aplicaIva == 1) {
+                        // 3. Calcular IVA basado en el subtotal
+                        det.setIva(det.calcularIva(new BigDecimal("0.15"), subtotalFila));
+                    } else {
+                        det.setIva(BigDecimal.ZERO);
+                    }
+
+                    tbl_detallefactura.refresh(); 
                     calcularTotalesGenerales();
-                    // Aquí deberías llamar a un método que sume los totales
-                    // de TODAS las filas y actualice los TextField de abajo (txt_total, txt_iva, etc.)
-                    // sumarTotalesGenerales(); 
                 }
             } else {
-                // Si no es válido (ej. 0 o texto), revierte al valor anterior
+                // Revertir si la cantidad es inválida (ej. 0 o texto)
                 det.setCantidad(event.getOldValue());
                 tbl_detallefactura.refresh();
-                // (Aquí podrías mostrar un mensaje de error)
             }
         });
         
@@ -608,18 +643,20 @@ public class FXMLFacturaController implements Initializable {
                 // Persistimos el detalle
                 em.persist(det); 
             }
-
+            
             // --- 7. Guardar la Cabecera ---
             // (Si no es bidireccional con Cascade.ALL, persistimos la factura ahora)
             em.persist(factura);
 
             // ⭐️ ¡CLAVE 6: Éxito! Confirmar la Transacción
             em.getTransaction().commit(); 
-
+            this.idFacturaGuardada = factura.getFacId();
             mod_general.mod.showConfirmacion(
                     "Factura grabada correctamente (JPA). Número: " + facNumero);
 
-            fun_limpiar(); // Limpia la interfaz
+            btn_imprimir.setDisable(false);
+            
+            //fun_limpiar(); // Limpia la interfaz
             cargarNumeroFacturaPreview();
         } catch (Exception e) {
             // ⭐️ ¡CLAVE 7: Error! Revertir la Transacción
@@ -636,6 +673,7 @@ public class FXMLFacturaController implements Initializable {
                 em.close();
             }
         }
+        
     }
 
     // (Asegúrate de tener este método fun_limpiar() en tu controlador)
@@ -662,7 +700,93 @@ public class FXMLFacturaController implements Initializable {
 
     @FXML
     private void acc_imprimir(ActionEvent event) {
-        //imprimir
+
+        // --- 1. Definir Constantes de Impresión ---
+        // ⚠️ ¡CAMBIA ESTO por el nombre exacto de tu impresora!
+        String NOMBRE_IMPRESORA = "EPSON TM-T88v ReceiptE4"; 
+        // Comando de corte para la mayoría de impresoras (Epson)
+        byte[] COMANDOS_CORTE = new byte[] { 0x1D, 0x56, 0x42, 0x00 }; 
+
+        // --- 2. Validación (Lógica del Controlador) ---
+        if (this.idFacturaGuardada == null) {
+            mod_general.mod.showError(
+                "No hay una factura guardada para imprimir. Grabe la factura primero.");
+            return;
+        }
+
+        // --- 3. Rescatar Datos (Lógica del Controlador) ---
+        EntityManager em = null;
+        TicketDatos datos = new TicketDatos();
+
+        try {
+            em = JPAUtil.getEntityManagerFactory().createEntityManager();
+
+            // "Rescatamos" la entidad completa de la BD
+            Factura factura = gestorFactura.findFacturaWithDetails(this.idFacturaGuardada);
+            if (factura == null) {
+                throw new Exception("Factura no encontrada en la BD.");
+            }
+            
+            // --- 4. "Empaquetar" los datos en el DTO ---
+            datos.setNumeroFactura(factura.getFacNumero());
+            datos.setDetalles(gestorDet.getDetallesporId(idFacturaGuardada));
+            // Formatear la fecha
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            datos.setFecha(sdf.format(factura.getFacFecha()));
+           
+            datos.setCliente(factura.getCliId());
+         
+            // Totales (vienen directos de la entidad Factura)
+            datos.setSubtotal(factura.getFacSubtotal());
+            datos.setSubtotal0(factura.getFacSubtotalcero());
+            datos.setIva(factura.getFacIva());
+            datos.setDescuento(factura.getFacDescuento());
+            datos.setTotal(factura.getFacTotal());
+
+        } catch (Exception e) {
+            mod_general.mod.showError("Error al rescatar datos: " + e.getMessage());
+            e.printStackTrace();
+            if (em != null) em.close();
+            return; // Salimos si no pudimos leer los datos
+        } finally {
+            if (em != null) em.close();
+        }
+
+        // 5 Generar el contenido
+        String contenidoTicket = servicioImpresion.generarContenidoTicket(datos);
+
+        // (Opcional: Imprimir en consola para depurar)
+        System.out.println("--- INICIO TICKET ---");
+        System.out.println(contenidoTicket);
+        System.out.println("--- FIN TICKET ---");
+
+        // 5.2. Intentar imprimir
+        boolean impresionExitosa = servicioImpresion.imprimir(NOMBRE_IMPRESORA, contenidoTicket, COMANDOS_CORTE);
+
+        // --- 6. Manejar el Resultado (Lógica del Controlador) ---
+        if (impresionExitosa) {
+            mod_general.mod.showError("Ticket enviado a la impresora.");
+        } else {
+            // La impresora falló, preguntamos para guardar
+            boolean guardar = mostrarDialogoConfirmacion(
+            "¿Desea guardar el ticket como un archivo de texto (.txt)?"
+            );
+
+            if (guardar) {
+                try {
+                    // Obtenemos la ventana actual (Stage) desde cualquier control
+                    Window ventana = txt_factura.getScene().getWindow();
+
+                    // Le pasamos el control al servicio para guardar
+                    servicioImpresion.guardarTicketComoTxt(contenidoTicket, datos.getNumeroFactura(), ventana);
+
+                    mod_general.mod.showConfirmacion("Ticket guardado exitosamente.");
+                } catch (Exception e) {
+                    mod_general.mod.showError("Error al guardar el ticket: " + e.getMessage());
+                }
+            }
+        }
+        fun_limpiar();
     }
 
     @FXML
@@ -858,5 +982,31 @@ public class FXMLFacturaController implements Initializable {
    }
 
 
-   
+   /**
+    * Muestra un diálogo de confirmación (Sí/No) y espera la respuesta del usuario.
+    * @param mensaje El texto principal que verá el usuario.
+    * @return true si el usuario presiona "Sí" (o Aceptar), false si presiona "No" o cierra la ventana.
+    */
+   private boolean mostrarDialogoConfirmacion(String mensaje) {
+
+       // 1. Crear el Alert de tipo CONFIRMATION
+       Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+       alert.setTitle("Confirmar Acción");
+       alert.setHeaderText("Impresora no encontrada o falló.");
+       alert.setContentText(mensaje);
+
+       // (Opcional) Puedes cambiar el texto de los botones si lo deseas
+       // ButtonType botonSi = new ButtonType("Sí, Guardar");
+       // ButtonType botonNo = new ButtonType("No, Cancelar");
+       // alert.getButtonTypes().setAll(botonSi, botonNo);
+
+       // 2. Mostrar el diálogo Y ESPERAR a que el usuario haga clic
+       Optional<ButtonType> resultado = alert.showAndWait();
+
+       // 3. Devolver 'true' SOLO si el usuario presionó el botón OK (o "Sí")
+       return resultado.isPresent() && resultado.get() == ButtonType.OK;
+
+       // Si cambiaste los botones, usa:
+       // return resultado.isPresent() && resultado.get() == botonSi;
+   }
 }

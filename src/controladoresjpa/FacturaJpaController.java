@@ -13,6 +13,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
@@ -180,4 +182,26 @@ public class FacturaJpaController implements Serializable {
             em.close();
         }
     }
+    
+    /**
+     * Busca una Factura por ID y trae forzosamente sus detalles
+     * en la misma consulta (Eager Loading con JOIN FETCH).
+     */
+    public Factura findFacturaWithDetails(BigDecimal id) {
+        EntityManager em = getEntityManager();
+        try {
+            // Esta consulta le dice a JPA que traiga la Factura Y sus detalles
+            TypedQuery<Factura> q = em.createQuery(
+                "SELECT f FROM Factura f LEFT JOIN FETCH f.detallefacturaCollection WHERE f.facId = :id", 
+                Factura.class
+            );
+            q.setParameter("id", id);
+            return q.getSingleResult();
+        } catch (NoResultException e) {
+            return null; // No se encontró
+        } finally {
+            em.close();
+        }
+    }
+    
 }

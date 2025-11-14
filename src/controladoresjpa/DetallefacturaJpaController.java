@@ -7,13 +7,17 @@ package controladoresjpa;
 import modelos.Detallefactura;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import util.JPAUtil;
 
 /**
  *
@@ -194,4 +198,35 @@ public class DetallefacturaJpaController implements Serializable {
             em.close();
         }
     }
+    
+    public Collection<Detallefactura> getDetallesporId(BigDecimal facId) {
+        EntityManager em = null;
+        Collection<Detallefactura> detalles = new ArrayList<>();
+
+        try {
+            em = JPAUtil.getEntityManagerFactory().createEntityManager();
+
+            // Consulta para obtener todos los detalles de una factura específica
+            String jpql = "SELECT d FROM Detallefactura d " +
+                         "LEFT JOIN FETCH d.prodId " +
+                         "WHERE d.facId.facId = :facId " +
+                         "ORDER BY d.detId";
+
+            TypedQuery<Detallefactura> query = em.createQuery(jpql, Detallefactura.class);
+            query.setParameter("facId", facId);
+
+            detalles = query.getResultList();
+
+        } catch (Exception e) {
+            System.err.println("Error al obtener detalles por ID de factura: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (em != null && em.isOpen()) {
+                em.close();
+            }
+        }
+
+        return detalles;
+    }
+    
 }
