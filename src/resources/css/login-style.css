@@ -1,0 +1,119 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : 15 nov 2025, 12:02:50 a.m.
+    Author     : usuario
+*/
+
+/* login-styles.css */
+
+/* --- Estilo General de la Ventana --- */
+#AnchorPane {
+    -fx-background-color: #f4f7f6; /* Fondo gris muy suave */
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* --- Estilo de Etiquetas (para el título) --- */
+.label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333; /* Texto gris oscuro */
+}
+
+/* --- Estilos de los Botones --- */
+
+/* Estilo base para todos los botones */
+.button {
+    -fx-background-radius: 8px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-pref-height: 40px; /* Altura fija para botones */
+}
+
+/* Botón Principal (Iniciar Sesión) */
+.primary-button {
+    -fx-background-color: #0078D7; /* Color azul primario */
+    -fx-text-fill: #FFFFFF; /* Texto blanco */
+}
+.primary-button:hover {
+    -fx-background-color: #005a9e; /* Azul más oscuro al pasar el ratón */
+}
+
+/* Botón Secundario (Registrarse) */
+.secondary-button {
+    -fx-background-color: transparent; /* Fondo transparente */
+    -fx-text-fill: #0078D7;         /* Texto azul */
+    -fx-border-color: #0078D7;         /* Borde azul */
+    -fx-border-width: 1.5px;
+}
+.secondary-button:hover {
+    -fx-background-color: #f0f8ff; /* Fondo azul muy claro al pasar el ratón */
+}
+
+/* Botón de Salir (Estilo más sutil) */
+.exit-button {
+    -fx-background-color: transparent; /* Fondo transparente */
+    -fx-text-fill: #555555;         /* Texto gris */
+    -fx-pref-height: 30px; /* Más pequeño */
+}
+.exit-button:hover {
+    -fx-background-color: #eeeeee; /* Fondo gris claro al pasar */
+    -fx-text-fill: #D32F2F;      /* Texto rojo para indicar "salida" */
+}
+
+
+/* --- Estilos para Campos con Iconos --- */
+
+/* El contenedor StackPane que alinea el icono */
+.icon-field-stack {
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* El campo de texto (TextField y PasswordField) */
+.icon-field {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8px;
+    -fx-border-color: #CED4DA;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-font-size: 14px;
+    -fx-prompt-text-fill: #ADB5BD;
+    -fx-pref-height: 42px; /* Altura fija */
+    
+    /* ¡IMPORTANTE! Padding-left de 35px para dejar espacio al icono */
+    -fx-padding: 8px 10px 8px 35px; 
+}
+
+/* Efecto al hacer clic (focus) */
+.icon-field:focused {
+    -fx-border-color: #0078D7; /* Borde azul al seleccionar */
+    -fx-border-width: 2px;
+}
+
+/* El <Region> que usamos como icono */
+.icon-graphic {
+    -fx-background-color: #888888; /* Color gris para el icono */
+    -fx-min-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-width: 16px;
+    -fx-max-height: 16px;
+    
+    /* Margen izquierdo para el icono dentro del campo */
+    -fx-translate-x: 10px; 
+}
+
+/* Cambia el color del icono cuando el campo está seleccionado */
+.icon-field:focused + .icon-graphic {
+    -fx-background-color: #0078D7; /* Color azul primario */
+}
+
+/* Las formas SVG para los iconos (no necesitas archivos de imagen) */
+.icon-user {
+    -fx-shape: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z";
+}
+
+.icon-lock {
+    -fx-shape: "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z";
+}

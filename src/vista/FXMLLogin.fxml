@@ -1,28 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" prefHeight="416.0" prefWidth="420.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLLoginController">
+<AnchorPane id="AnchorPane" prefHeight="500.0" prefWidth="400.0" stylesheets="@../resources/css/login-style.css" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controladores.FXMLLoginController">
    <children>
-      <Label fx:id="lblUser" layoutX="117.0" layoutY="107.0" prefHeight="21.0" prefWidth="120.0" text="%login.user">
-         <font>
-            <Font name="Segoe UI" size="16.0" />
-         </font>
-      </Label>
-      <TextField fx:id="txtUser" layoutX="117.0" layoutY="140.0" prefHeight="25.0" prefWidth="190.0" promptText="%login.user" />
-      <Label fx:id="lblṔassword" layoutX="117.0" layoutY="175.0" prefHeight="21.0" prefWidth="120.0" text="%login.password">
-         <font>
-            <Font name="Segoe UI" size="16.0" />
-         </font>
-      </Label>
-      <Button fx:id="btnLogin" layoutX="117.0" layoutY="244.0" mnemonicParsing="false" onAction="#accBtnLogin" prefHeight="32.0" prefWidth="190.0" text="%login.signin" />
-      <Button fx:id="btnSignUp" layoutX="117.0" layoutY="290.0" mnemonicParsing="false" onAction="#accBtnSignUp" prefHeight="32.0" prefWidth="190.0" text="%login.signup" />
-      <PasswordField fx:id="txtPassword" layoutX="117.0" layoutY="203.0" prefHeight="25.0" prefWidth="190.0" promptText="%login.password" />
-      <Button fx:id="btnSalir" layoutX="117.0" layoutY="339.0" mnemonicParsing="false" onAction="#accBtnSalir" prefHeight="32.0" prefWidth="190.0" text="Salir" />
+      
+      <VBox alignment="CENTER" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <padding>
+            <Insets bottom="40.0" left="50.0" right="50.0" top="40.0" />
+         </padding>
+         
+         <children>
+         
+            <Label style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #111;" text="Iniciar Sesión">
+               <VBox.margin>
+                  <Insets bottom="20.0" />
+               </VBox.margin>
+            </Label>
+            
+            <StackPane styleClass="icon-field-stack">
+               <children>
+                  <TextField fx:id="txtUser" promptText="%login.user" styleClass="icon-field" />
+                  <Region styleClass="icon-graphic, icon-user" />
+               </children>
+            </StackPane>
+            
+            <StackPane styleClass="icon-field-stack">
+               <children>
+                  <PasswordField fx:id="txtPassword" promptText="%login.password" styleClass="icon-field" />
+                  <Region styleClass="icon-graphic, icon-lock" />
+               </children>
+            </StackPane>
+
+            <Label fx:id="lblError" managed="false" style="-fx-text-fill: #D32F2F; -fx-font-weight: bold;" text="Error" visible="false" />
+            
+            <VBox alignment="CENTER" spacing="10.0">
+               <VBox.margin>
+                  <Insets top="15.0" />
+               </VBox.margin>
+               <children>
+                  <Button fx:id="btnLogin" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#accBtnLogin" styleClass="primary-button" text="%login.signin" />
+                  
+                  <Button fx:id="btnSignUp" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#accBtnSignUp" styleClass="secondary-button" text="%login.signup" />
+               </children>
+            </VBox>
+            
+            <Button fx:id="btnSalir" mnemonicParsing="false" onAction="#accBtnSalir" styleClass="exit-button" text="Salir">
+               <VBox.margin>
+                  <Insets top="20.0" />
+               </VBox.margin>
+            </Button>
+            
+            <Label fx:id="lblUser" managed="false" text="%login.user" visible="false">
+               <font>
+                  <Font name="Segoe UI" size="16.0" />
+               </font>
+            </Label>
+            <Label fx:id="lblṔassword" managed="false" text="%login.password" visible="false">
+               <font>
+                  <Font name="Segoe UI" size="16.0" />
+               </font>
+            </Label>
+            
+         </children>
+      </VBox>
    </children>
 </AnchorPane>

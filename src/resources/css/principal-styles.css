@@ -1,0 +1,162 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : 15 nov 2025, 12:06:03 a.m.
+    Author     : usuario
+*/
+/* principal-styles.css - VERSIÓN "LIGHT" (CLARA) */
+
+/* --- Estilo General --- */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* --- Barra Lateral (VBox a la izquierda) --- */
+.sidebar {
+    -fx-background-color: #f8f9fa; /* Gris muy claro */
+    -fx-padding: 10px;
+    /* Borde sutil a la derecha para separar */
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 0 1px 0 0;
+}
+
+/* Título de la barra lateral ("Facturación") */
+.sidebar-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529; /* Texto oscuro */
+    -fx-alignment: center;
+    -fx-min-height: 50px;
+    -fx-padding: 10px 0;
+}
+
+/* --- Botones del Menú Principal (Administración, Proceso...) --- */
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #343a40; /* Texto gris oscuro */
+    -fx-font-size: 15px; /* Un poco más pequeño */
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10px 15px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.menu-button:hover {
+    -fx-background-color: #e9ecef; /* Hover gris claro */
+    -fx-text-fill: #0056b3; /* Acento azul al pasar */
+}
+
+/* Iconos de botones principales */
+.menu-button .svg-path {
+    -fx-fill: #495057; /* Iconos grises */
+}
+.menu-button:hover .svg-path {
+    -fx-fill: #0056b3; /* Acento azul al pasar */
+}
+
+/* --- Contenedor del Submenú (VBox) --- */
+.submenu-box {
+    -fx-background-color: transparent; /* Sin fondo extra */
+    -fx-padding: 5px 0 5px 15px; /* Solo indentación izquierda */
+}
+
+/* --- Botones del Submenú (Gestión Clientes, Facturas...) --- */
+.submenu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #495057; /* Texto gris */
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8px 15px; /* Menos padding que el principal */
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.submenu-button:hover {
+    -fx-background-color: #e9ecef;
+    -fx-text-fill: #0056b3;
+}
+
+/* Iconos de submenú */
+.submenu-button .svg-path {
+    -fx-fill: #6c757d; /* Iconos grises más claros */
+}
+.submenu-button:hover .svg-path {
+    -fx-fill: #0056b3;
+}
+
+/* --- 2. Estilos para la Barra de Búsqueda --- */
+.search-bar-stack {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 5px 0 15px 0;
+}
+
+.search-field {
+    -fx-background-color: #ffffff; /* Fondo blanco */
+    -fx-background-radius: 20px;
+    -fx-border-color: #ced4da; /* Borde gris estándar */
+    -fx-border-radius: 20px;
+    -fx-text-fill: #212529; /* Texto oscuro */
+    -fx-prompt-text-fill: #6c757d;
+    -fx-padding: 8px 10px 8px 35px;
+}
+
+.search-icon {
+    -fx-shape: "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z";
+    -fx-background-color: #6c757d; /* Icono gris */
+    -fx-min-width: 16px; -fx-max-width: 16px;
+    -fx-min-height: 16px; -fx-max-height: 16px;
+    -fx-translate-x: 12px;
+}
+
+.search-field:focused {
+    -fx-border-color: #007bff; /* Borde azul al seleccionar */
+}
+.search-field:focused + .search-icon {
+    -fx-background-color: #007bff; /* Icono azul */
+}
+
+/* --- 3. Estilos para el Avatar de Usuario --- */
+.user-info-box {
+    -fx-border-color: #dee2e6; /* Línea superior gris claro */
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 15px 10px 10px 10px;
+}
+
+.avatar-icon {
+    -fx-background-color: #007bff; /* Azul de acento */
+    -fx-min-width: 40px; -fx-max-width: 40px;
+    -fx-min-height: 40px; -fx-max-height: 40px;
+    -fx-background-radius: 20px;
+    -fx-border-color: #ffffff; /* Borde blanco */
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
+}
+
+.user-info-vbox { -fx-alignment: CENTER_LEFT; }
+
+.label-header {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6c757d; /* Gris */
+}
+.label-data {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529; /* Oscuro */
+}
+
+/* --- Área de Contenido Principal (Centro) --- */
+.content-pane {
+    -fx-background-color: #ffffff; /* Fondo blanco puro */
+    -fx-padding: 0;
+}
+
+.content-vbox {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20px;
+    -fx-spacing: 15px;
+}
+

@@ -142,7 +142,13 @@ public class FXMLUsuarioFormularioController implements Initializable {
                 mod.showConfirmacion("Usuario creado exitosamente");
             }
             
+            
+            if(this.esEdicion){
             cerrarVentana();
+            }
+            else{
+                funAbrirVentana("/vista/FXMLLogin.fxml", event);
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -153,7 +159,12 @@ public class FXMLUsuarioFormularioController implements Initializable {
     @FXML
     private void accBtnCancelar(ActionEvent event) {
         System.out.println("Cancelar");
-        cerrarVentana();
+        if(this.esEdicion){
+            cerrarVentana();
+        }
+        else{
+            funAbrirVentana("/vista/FXMLLogin.fxml", event);
+        }
     }
 
     private boolean validarCampos(String nombre, String usuario, String clave, Perfil perfilSeleccionado) {
@@ -209,7 +220,7 @@ public class FXMLUsuarioFormularioController implements Initializable {
             this.esEdicion = true;
             this.usuarioEdicion = usuario;
             cargarDatosUsuario();
-            txtSeguridad.setDisable(true);
+            txtSeguridad.setDisable(false);
             btnGrabar.setText("Actualizar");
             actualizarTituloVentana("Editar Usuario - " + usuario.getUsrNombres());
         }
@@ -290,4 +301,6 @@ public class FXMLUsuarioFormularioController implements Initializable {
             e.printStackTrace();
         }
     }
+    
+    
 }

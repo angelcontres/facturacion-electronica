@@ -151,6 +151,7 @@ public class FXMLLoginController implements Initializable {
     @FXML
     private void accBtnSalir(ActionEvent event) {
         System.out.println("Salir");
+        
         Platform.exit();
     }
 

@@ -153,6 +153,13 @@ public class FXMLFacturaController implements Initializable {
     @FXML
     private CheckBox chboxConsumidorFInal;
     private Cliente clienteConsumidorFinal; // Para guardar el cliente 99999
+    
+    private BigDecimal totalSubtotalConIVA;
+    private BigDecimal totalSubtotalCero;
+    private BigDecimal totalIVA;
+    private BigDecimal totalDescuento;
+    private BigDecimal totalGeneral;
+    
     /**
      * Initializes the controller class.
      */
@@ -355,8 +362,13 @@ public class FXMLFacturaController implements Initializable {
                             }
                             @Override
                             public BigDecimal fromString(String string) {
+                                if (string == null || string.trim().isEmpty()) {
+                                    return BigDecimal.ZERO;
+                                }
                                 try {
-                                    return new BigDecimal(string);
+                                    // Estandariza la entrada: reemplaza comas por puntos
+                                    String textoEstandar = string.replace(',', '.');
+                                    return new BigDecimal(textoEstandar);
                                 } catch (Exception e) {
                                     return BigDecimal.ZERO;
                                 }
@@ -538,7 +550,6 @@ public class FXMLFacturaController implements Initializable {
                 tbl_detallefactura.refresh();
             }
         });
-        
         
     }
     
@@ -734,11 +745,11 @@ public class FXMLFacturaController implements Initializable {
             factura.setFacNumero(facNumero);
             factura.setFacFecha(new java.util.Date()); // O usa @PrePersist en la entidad
             factura.setCliId(cliente); // ⭐️ ¡Se asigna el OBJETO, no el ID!
-            factura.setFacSubtotal(new BigDecimal(txt_subtotal.getText()));
-            factura.setFacSubtotalcero(new BigDecimal(txt_subtotal0.getText()));
-            factura.setFacIva(new BigDecimal(txt_iva.getText()));
-            factura.setFacDescuento(new BigDecimal(txt_descuento.getText())); // Es 0.00
-            factura.setFacTotal(new BigDecimal(txt_total.getText()));
+            factura.setFacSubtotal(this.totalSubtotalConIVA);
+            factura.setFacSubtotalcero(this.totalSubtotalCero);
+            factura.setFacIva(this.totalIVA);
+            factura.setFacDescuento(this.totalDescuento);
+            factura.setFacTotal(this.totalGeneral);
             factura.setFacEstado("A");
 
             // (Si tienes la relación bidireccional, prepara la colección)
@@ -934,6 +945,9 @@ public class FXMLFacturaController implements Initializable {
                             txt_correo.setText(cliente.getCliCorreo() != null ? cliente.getCliCorreo() : "");
                             txt_direccion.setText(cliente.getCliDireccion() != null ? cliente.getCliDireccion() : "");
                             //txt_documento.requestFocus();
+                            
+                            
+                            
                         } else {
                             // Limpiar campos si no encuentra
                             limpiarCamposCliente();
@@ -1041,10 +1055,18 @@ public class FXMLFacturaController implements Initializable {
         txt_subtotal0.setText(formatoDosDecimales.format(subtotalCero));
         txt_iva.setText(formatoDosDecimales.format(totalIVA));
 
-        // Actualizamos el campo de descuento para que MUESTRE 0.00
+        // Actualizamos el campo de descuento para que MUESTRE 0.00 o 0,00
         txt_descuento.setText(formatoDosDecimales.format(descuento)); 
 
         txt_total.setText(formatoDosDecimales.format(totalGeneral));
+        
+        // 5. Guardar los objetos BigDecimal para usarlos al grabar
+        this.totalSubtotalConIVA = subtotalConIVA;
+        this.totalSubtotalCero = subtotalCero;
+        this.totalIVA = totalIVA;
+        this.totalDescuento = descuento;
+        this.totalGeneral = totalGeneral;
+        
     }
 
     
