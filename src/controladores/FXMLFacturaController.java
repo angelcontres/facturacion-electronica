@@ -142,8 +142,6 @@ public class FXMLFacturaController implements Initializable {
     
     private final DecimalFormat formatoDosDecimales = new DecimalFormat("0.00");
     @FXML
-    private Button btn_anadirProducto;
-    @FXML
     private Button btn_eliminarDetalle;
     
     private final ServicioImpresion servicioImpresion = new ServicioImpresion();
@@ -421,63 +419,112 @@ public class FXMLFacturaController implements Initializable {
         col_total.setCellFactory(crearFabricaDeCeldasFormateada(formatoDosDecimales));
         
         col_codigo.setOnEditCommit(evento -> {
-            Detallefactura det = evento.getRowValue();
+            // La fila que el usuario está editando
+            Detallefactura detActual = evento.getRowValue();
             String nuevoCodigo = evento.getNewValue();
 
-            // ... (Tu código para limpiar la fila si el código es vacío) ...
+            // 1. SI EL CÓDIGO ESTÁ VACÍO
             if (nuevoCodigo == null || nuevoCodigo.trim().isEmpty()) {
-                det.setProdId(null);
-                det.setCantidad(null);
-                det.setProdPvp(null);
-                det.setIva(null);
-                det.setTotal(null);
-                // ¡No hay setProdAplicaiva que limpiar!
+                limpiarFila(detActual);
                 tbl_detallefactura.refresh();
                 calcularTotalesGenerales(); 
                 return;
             }
 
+            // 2. BUSCAR EL PRODUCTO EN LA BD
             Producto objProd = gestorProducto.buscarPorCodigo(nuevoCodigo);
 
+            // 3. SI EL PRODUCTO SÍ EXISTE EN LA BD
             if (objProd != null) {
-                det.setProdId(objProd);
-                det.setProdNombre(objProd.getProdNombre());
 
-                if (det.getCantidad() == null) {
-                    det.setCantidad(new BigInteger("1"));
+                int filaActualIndex = evento.getTablePosition().getRow();
+
+                // --- ⭐️ INICIO LÓGICA DE PRODUCTO REPETIDO ⭐️ ---
+                // Iteramos sobre todas las filas de la tabla
+                for (int i = 0; i < tbl_detallefactura.getItems().size(); i++) {
+
+                    // No te compares contigo mismo (la fila que estás editando)
+                    if (i == filaActualIndex) {
+                        continue;
+                    }
+
+                    Detallefactura detExistente = tbl_detallefactura.getItems().get(i);
+
+                    // Comprobar si el producto ya existe en otra fila
+                    if (detExistente.getProdId() != null && detExistente.getProdId().equals(objProd)) {
+
+                        // 1. ¡PRODUCTO REPETIDO ENCONTRADO!
+                        BigInteger cantExistente = (detExistente.getCantidad() == null) ? BigInteger.ZERO : detExistente.getCantidad();
+
+                        // Le sumamos "uno más" (o la cantidad de la fila actual si ya tenía)
+                        BigInteger cantActual = (detActual.getCantidad() == null) ? BigInteger.ONE : detActual.getCantidad();
+                        BigInteger nuevaCantidad = cantExistente.add(cantActual); 
+                        detExistente.setCantidad(nuevaCantidad);
+
+                        // 2. Recalcular la fila EXISTENTE (la que se actualizó)
+                        recalcularFila(detExistente);
+
+                        // 3. Limpiar la fila ACTUAL (donde el usuario escribió el código)
+                        limpiarFila(detActual);
+
+                        // 4. Actualizar la GUI
+                        tbl_detallefactura.refresh();
+                        calcularTotalesGenerales();
+                        int nuevaFilaIndex = tbl_detallefactura.getItems().size() - 1;                        // 5. Mover el foco a la fila que se actualizó
+                        Platform.runLater(() -> {
+                            tbl_detallefactura.requestFocus();
+                            tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
+                            tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                        });
+
+                        // 6. ¡TERMINAR LA FUNCIÓN!
+                        return; 
+                    }
+                }
+                // --- ⭐️ FIN LÓGICA DE PRODUCTO REPETIDO ⭐️ ---
+
+                // 4. SI NO ES REPETIDO (el 'return' no se ejecutó)
+                // Rellenamos la fila actual que el usuario estaba editando.
+
+                detActual.setProdId(objProd);
+                detActual.setProdNombre(objProd.getProdNombre());
+
+                // Asignar cantidad 1 por defecto
+                if (detActual.getCantidad() == null) {
+                    detActual.setCantidad(new BigInteger("1"));
                 }
 
-                det.setProdPvp(objProd.getProdPvpxmenor());
+                detActual.setProdPvp(objProd.getProdPvpxmenor());
 
+                // Recalcular la fila ACTUAL
+                // ⚠️ CORREGIDO: Usando el método 'sumartotal' de tu entidad
+                BigDecimal subtotalFila = detActual.calcularSubtotalFila(detActual.getCantidad(), detActual.getProdPvp());
+                detActual.setTotal(subtotalFila);
 
-                // 1. Calcular el subtotal de la fila (Cant * PVP)
-                BigDecimal subtotalFila = det.calcularSubtotalFila(det.getCantidad(), det.getProdPvp());
-                det.setTotal(subtotalFila); // 'total' es el subtotal de la fila
-                
-                // 2. Calcular IVA (SOLO si aplica)
-                // Se lee directo del producto
                 Short aplicaIva = objProd.getProdAplicaiva(); 
-
                 if (aplicaIva != null && aplicaIva == 1) {
-                    det.setIva(det.calcularIva(new BigDecimal("0.15"), subtotalFila));
+                    detActual.setIva(detActual.calcularIva(new BigDecimal("0.15"), subtotalFila));
                 } else {
-                    det.setIva(BigDecimal.ZERO); // No aplica IVA
+                    detActual.setIva(BigDecimal.ZERO);
                 }
 
-
-
+                // Actualizar GUI y mover foco (como lo tenías)
                 tbl_detallefactura.refresh();
-                addFila();
-                calcularTotalesGenerales();
+                addFila(); // Añade la nueva fila vacía al final
+                calcularTotalesGenerales(); 
+
+                // Mover el foco a la columna "Código" de la NUEVA fila
+                int nuevaFilaIndex = tbl_detallefactura.getItems().size() - 1;
+                Platform.runLater(() -> {
+                    tbl_detallefactura.requestFocus();
+                    tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
+                    tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                });
 
             } else {
-                // ... (tu código para limpiar si no se encuentra el producto) ...
-                det.setProdId(null);
-                det.setCantidad(null);
-                det.setProdPvp(null);
-                det.setIva(null);
-                det.setTotal(null);
-
+                // 5. SI EL PRODUCTO NO EXISTE EN LA BD
+                mod_general.mod.showError("El producto con el código " + nuevoCodigo + " no existe.");
+                limpiarFila(detActual);
                 tbl_detallefactura.refresh();
                 calcularTotalesGenerales(); 
             }
@@ -1130,7 +1177,7 @@ public class FXMLFacturaController implements Initializable {
     * @param mensaje El texto principal que verá el usuario.
     * @return true si el usuario presiona "Sí" (o Aceptar), false si presiona "No" o cierra la ventana.
     */
-   private boolean mostrarDialogoConfirmacion(String mensaje) {
+    private boolean mostrarDialogoConfirmacion(String mensaje) {
 
        // 1. Crear el Alert de tipo CONFIRMATION
        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -1151,5 +1198,84 @@ public class FXMLFacturaController implements Initializable {
 
        // Si cambiaste los botones, usa:
        // return resultado.isPresent() && resultado.get() == botonSi;
-   }
+    }
+
+    /**
+    * Se activa con el botón 'Eliminar Detalle'.
+    * Elimina la fila seleccionada de la tabla y recalcula los totales.
+    */
+    @FXML
+    private void accEliminarDetalle(ActionEvent event) {
+
+       // 1. Obtener el item seleccionado en la tabla
+       Detallefactura seleccionado = tbl_detallefactura.getSelectionModel().getSelectedItem();
+
+       // 2. Validar si algo está seleccionado
+       if (seleccionado == null) {
+           mod_general.mod.showError("Por favor, seleccione la fila que desea eliminar.");
+           return;
+       }
+
+       // 3. Validar si es la última fila vacía (la fila de "añadir nuevo")
+       int totalFilas = tbl_detallefactura.getItems().size();
+       if (totalFilas == 1 && seleccionado.getProdId() == null) {
+           // Es la única fila y está vacía. No se debe borrar.
+           return; 
+       }
+
+       // 4. Eliminar la fila de la lista observable de la tabla
+       tbl_detallefactura.getItems().remove(seleccionado);
+
+       // 5. ¡Importante! Recalcular los totales generales (Subtotal, IVA, Total)
+       calcularTotalesGenerales();
+
+       tbl_detallefactura.refresh();
+       // 6. (Salvaguarda) Si por alguna razón la tabla queda vacía, 
+       //    llamamos a addFila() para que añada la fila "nueva".
+       if (tbl_detallefactura.getItems().isEmpty()) {
+           addFila(); 
+       }
+       
+    }
+   
+    
+    /**
+    * Limpia todos los campos de un objeto Detallefactura (para la GUI).
+    * Esto se usa para limpiar la fila actual después de sumar un duplicado.
+    */
+    private void limpiarFila(Detallefactura det) {
+       det.setProdId(null);
+       det.setProdNombre(null);
+       det.setCantidad(null);
+       det.setProdPvp(null);
+       det.setIva(null);
+       det.setTotal(null);
+    }
+
+    /**
+     * Recalcula el Subtotal (Total) y el IVA de una fila de detalle específica.
+     * Asume que det.getProdId(), det.getCantidad() y det.getProdPvp() ya están seteados.
+     */
+    private void recalcularFila(Detallefactura det) {
+        if (det.getProdId() == null || det.getCantidad() == null) {
+            // No se puede calcular si falta el producto o la cantidad
+            det.setTotal(BigDecimal.ZERO);
+            det.setIva(BigDecimal.ZERO);
+            return; 
+        }
+
+        // 1. Calcular subtotal de fila (usando el método de tu entidad)
+        BigDecimal subtotalFila = det.sumartotal(det.getCantidad(), det.getProdPvp());
+        det.setTotal(subtotalFila);
+
+        // 2. Revisar si aplica IVA
+        Short aplicaIva = det.getProdId().getProdAplicaiva(); 
+
+        if (aplicaIva != null && aplicaIva == 1) {
+            // 3. Calcular IVA basado en el subtotal
+            det.setIva(det.calcularIva(new BigDecimal("0.15"), subtotalFila));
+        } else {
+            det.setIva(BigDecimal.ZERO);
+        }
+    }
 }

@@ -108,14 +108,13 @@
               <children>
                 <Label style="-fx-font-weight: bold; -fx-font-size: 14px;" text="Detalle de Productos" />
                 <Separator HBox.hgrow="ALWAYS" />
-                <Button fx:id="btn_anadirProducto" mnemonicParsing="false" styleClass="primary-button" text="➕ Agregar Producto" />
-                <Button fx:id="btn_eliminarDetalle" mnemonicParsing="false" styleClass="danger-button" text="🗑 Quitar Fila" />
+                <Button fx:id="btn_eliminarDetalle" mnemonicParsing="false" onAction="#accEliminarDetalle" styleClass="danger-button" text="🗑 Quitar Fila" />
               </children>
             </HBox>
                   <HBox prefHeight="222.0" prefWidth="637.0">
                      <children>
       
-                  <TableView fx:id="tbl_detallefactura" editable="true" prefHeight="222.0" prefWidth="562.0" styleClass="invoice-table">
+                  <TableView fx:id="tbl_detallefactura" editable="true" prefHeight="222.0" prefWidth="534.0" styleClass="invoice-table">
                     <columns>
                       <TableColumn fx:id="col_ID" prefWidth="75.0" text="ID" visible="false" />
                       <TableColumn fx:id="col_codigo" prefWidth="120.0" text="CÓDIGO" />
@@ -131,7 +130,7 @@
                       <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                     </columnResizePolicy>
                   </TableView>
-                        <VBox prefHeight="200.0" prefWidth="100.0">
+                        <VBox prefHeight="222.0" prefWidth="119.0">
                            <children>
                         <Button fx:id="btn_grabar" defaultButton="true" mnemonicParsing="false" onAction="#acc_grabar" styleClass="primary-button" text="💾 Guardar Factura" />
                         <Button fx:id="btn_anular" mnemonicParsing="false" onAction="#acc_anular" styleClass="secondary-button" text="Anular Factura" />

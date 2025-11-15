@@ -18,15 +18,7 @@
          
          <Label alignment="CENTER" maxWidth="Infinity" prefHeight="50" styleClass="sidebar-title" text="Facturación" />
          
-         <StackPane styleClass="search-bar-stack">
-            <children>
-               <TextField fx:id="txtSearch" promptText="Buscar..." styleClass="search-field" />
-               <Region styleClass="search-icon" />
-            </children>
-            <VBox.margin>
-               <Insets bottom="10.0" left="5.0" right="5.0" />
-            </VBox.margin>
-         </StackPane>
+         
 
          <Button fx:id="btnAdministracion" maxWidth="Infinity" onAction="#abrirSubMenuAdministracion" prefHeight="40" styleClass="menu-button" text="Administración">
             <graphic>
