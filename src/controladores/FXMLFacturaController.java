@@ -471,11 +471,14 @@ public class FXMLFacturaController implements Initializable {
                         tbl_detallefactura.refresh();
                         calcularTotalesGenerales();
                         int nuevaFilaIndex = tbl_detallefactura.getItems().size() - 1;                        // 5. Mover el foco a la fila que se actualizó
-                        Platform.runLater(() -> {
-                            tbl_detallefactura.requestFocus();
-                            tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
-                            tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                        Platform.runLater(() -> { // Primer 'Later'
+                            Platform.runLater(() -> { // Segundo 'Later'
+                                tbl_detallefactura.requestFocus();
+                                tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
+                                tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                            });
                         });
+                        
 
                         // 6. ¡TERMINAR LA FUNCIÓN!
                         return; 
@@ -515,10 +518,12 @@ public class FXMLFacturaController implements Initializable {
 
                 // Mover el foco a la columna "Código" de la NUEVA fila
                 int nuevaFilaIndex = tbl_detallefactura.getItems().size() - 1;
-                Platform.runLater(() -> {
-                    tbl_detallefactura.requestFocus();
-                    tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
-                    tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                Platform.runLater(() -> { // Primer 'Later'
+                    Platform.runLater(() -> { // Segundo 'Later'
+                        tbl_detallefactura.requestFocus();
+                        tbl_detallefactura.getSelectionModel().select(nuevaFilaIndex, col_codigo);
+                        tbl_detallefactura.edit(nuevaFilaIndex, col_codigo);
+                    });
                 });
 
             } else {
